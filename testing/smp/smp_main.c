@@ -87,12 +87,15 @@ static void hog_milliseconds(unsigned int milliseconds)
 {
   volatile unsigned int i;
   volatile unsigned int j;
+  irqstate_t flags;
 
   for (i = 0; i < milliseconds; i++)
     {
+      flags = enter_critical_section();
       for (j = 0; j < CONFIG_BOARD_LOOPSPERMSEC; j++)
         {
         }
+      leave_critical_section(flags);
     }
 }
 
@@ -109,6 +112,7 @@ static void hog_time(FAR const char *caller, int threadno)
 {
   unsigned int remaining = HOG_MSEC;
   unsigned int hogmsec;
+  irqstate_t flags;
 
   while (remaining > 0)
     {
@@ -120,8 +124,10 @@ static void hog_time(FAR const char *caller, int threadno)
           hogmsec = remaining;
         }
 
+      flags = up_irq_save();
       hog_milliseconds(hogmsec);
       remaining -= hogmsec;
+      up_irq_restore(flags);
 
       /* Let other threads run */
 
