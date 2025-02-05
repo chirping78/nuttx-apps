@@ -62,8 +62,21 @@ static volatile int g_thread_cpu[CONFIG_TESTING_SMP_NBARRIER_THREADS + 1];
 static void show_cpu(FAR const char *caller, int threadno)
 {
   g_thread_cpu[threadno] = sched_getcpu();
-  printf("%s[%d]: Running on CPU%d\n",
-         caller, threadno, g_thread_cpu[threadno]);
+
+  if (xtensa_getmisc0() == 0)
+  {
+    if (g_thread_cpu[threadno] == 0)
+    {
+      xtensa_setmisc0(1000);
+    }
+    else if (g_thread_cpu[threadno] == 1)
+    {
+      xtensa_setmisc0(2000);
+    }
+  }
+
+  printf("%s[%d]: Running on CPU%d misc=%d\n",
+         caller, threadno, g_thread_cpu[threadno], xtensa_getmisc0());
 }
 
 static void show_cpu_conditional(FAR const char *caller, int threadno)
@@ -73,7 +86,7 @@ static void show_cpu_conditional(FAR const char *caller, int threadno)
   if (cpu != g_thread_cpu[threadno])
     {
       g_thread_cpu[threadno] = cpu;
-      printf("%s[%d]: Now running on CPU%d\n", caller, threadno, cpu);
+      printf("%s[%d]: Now running on CPU%d misc=%d\n", caller, threadno, cpu, xtensa_getmisc0());
     }
 }
 
